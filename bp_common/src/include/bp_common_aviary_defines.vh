@@ -127,6 +127,7 @@ typedef struct packed
   integer dtlb_els;
 
   integer lr_sc;
+  integer amo_swap;
   integer amo_fetch_logic;
   integer amo_fetch_arithmetic;
 
@@ -239,6 +240,7 @@ typedef struct packed
   , localparam dtlb_els_p              = proc_param_lp.dtlb_els                                    \
                                                                                                    \
   , localparam lr_sc_p                    = proc_param_lp.lr_sc                                    \
+  , localparam amo_swap_p                 = proc_param_lp.amo_swap                                 \
   , localparam amo_fetch_logic_p          = proc_param_lp.amo_fetch_logic                          \
   , localparam amo_fetch_arithmetic_p     = proc_param_lp.amo_fetch_arithmetic                     \
                                                                                                    \
