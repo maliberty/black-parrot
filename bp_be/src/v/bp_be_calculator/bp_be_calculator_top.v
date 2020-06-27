@@ -20,7 +20,7 @@ module bp_be_calculator_top
  #(parameter bp_params_e bp_params_p = e_bp_inv_cfg
     `declare_bp_proc_params(bp_params_p)
     `declare_bp_fe_be_if_widths(vaddr_width_p, paddr_width_p, asid_width_p, branch_metadata_fwd_width_p)
-    `declare_bp_cache_service_if_widths(paddr_width_p, ptag_width_p, dcache_sets_p, dcache_assoc_p, dword_width_p, dcache_block_width_p, dcache)
+    `declare_bp_cache_service_if_widths(paddr_width_p, ptag_width_p, dcache_sets_p, dcache_assoc_p, dword_width_p, dcache_block_width_p, dcache_fill_width_p, dcache)
 
    // Default parameters
    , parameter fp_en_p                  = 0
@@ -70,13 +70,13 @@ module bp_be_calculator_top
 
   // D$-LCE Interface
   // signals to LCE
-  , output logic [dcache_req_width_lp-1:0]         cache_req_o
-  , output logic                                   cache_req_v_o
-  , input                                          cache_req_ready_i
-  , output logic [dcache_req_metadata_width_lp-1:0]cache_req_metadata_o
-  , output logic                                   cache_req_metadata_v_o
-
-  , input cache_req_complete_i
+  , output logic [dcache_req_width_lp-1:0]          cache_req_o
+  , output logic                                    cache_req_v_o
+  , input                                           cache_req_ready_i
+  , output logic [dcache_req_metadata_width_lp-1:0] cache_req_metadata_o
+  , output logic                                    cache_req_metadata_v_o
+  , input                                           cache_req_critical_i
+  , input                                           cache_req_complete_i
 
   // data_mem
   , input data_mem_pkt_v_i
@@ -330,6 +330,7 @@ bp_be_pipe_mul
      ,.cache_req_ready_i(cache_req_ready_i)
      ,.cache_req_metadata_o(cache_req_metadata_o)
      ,.cache_req_metadata_v_o(cache_req_metadata_v_o)
+     ,.cache_req_critical_i(cache_req_critical_i)
      ,.cache_req_complete_i(cache_req_complete_i)
 
      ,.data_mem_pkt_i(data_mem_pkt_i)
@@ -381,8 +382,8 @@ bp_be_pipe_mul
      ,.cfg_csr_data_o(cfg_csr_data_o)
      ,.cfg_priv_data_o(cfg_priv_data_o)
 
-     ,.kill_ex1_i(exc_stage_n[1].poison_v)
-     ,.kill_ex2_i(exc_stage_n[2].poison_v)
+     ,.kill_ex1_i(exc_stage_r[0].poison_v)
+     ,.kill_ex2_i(exc_stage_r[1].poison_v)
      ,.kill_ex3_i(exc_stage_r[2].poison_v) 
 
      ,.decode_i(reservation_r.decode)
@@ -395,8 +396,8 @@ bp_be_pipe_mul
      ,.ptw_miss_pkt_o(ptw_miss_pkt)
      ,.ptw_fill_pkt_i(ptw_fill_pkt)
 
-     ,.exception_i(exc_stage_r[3].exc)
-     ,.exception_pc_i(calc_stage_r[3].pc)
+     ,.exception_i(exc_stage_r[2].exc)
+     ,.exception_pc_i(calc_stage_r[2].pc)
      ,.exception_vaddr_i(pipe_mem_vaddr_r)
      ,.commit_pkt_i(commit_pkt)
      ,.trap_pkt_o(trap_pkt)

@@ -189,7 +189,7 @@ bind bp_be_top
      ,.reset_i(reset_i)
      ,.freeze_i(scheduler.int_regfile.cfg_bus.freeze)
 
-     ,.mhartid_i(be_checker.scheduler.int_regfile.cfg_bus.core_id)
+     ,.mhartid_i(scheduler.int_regfile.cfg_bus.core_id)
 
      ,.decode_i(calculator.reservation_n.decode)
 
@@ -208,74 +208,36 @@ bind bp_be_top
    cosim
     (.clk_i(clk_i)
      ,.reset_i(reset_i)
-     ,.freeze_i(be_checker.scheduler.int_regfile.cfg_bus.freeze)
+     ,.freeze_i(scheduler.int_regfile.cfg_bus.freeze)
 
      // We want to pass these values as parameters, but cannot in Verilator 4.025
      // Parameter-resolved constants must not use dotted references
      ,.en_i(testbench.cosim_p == 1)
      ,.checkpoint_i(testbench.checkpoint_p == 1)
      ,.num_core_i(testbench.num_core_p)
-     ,.mhartid_i(be_checker.scheduler.int_regfile.cfg_bus.core_id)
+     ,.mhartid_i(scheduler.int_regfile.cfg_bus.core_id)
      ,.config_file_i(testbench.cosim_cfg_file_p)
      ,.instr_cap_i(testbench.cosim_instr_p)
      ,.memsize_i(testbench.cosim_memsize_p)
 
-     ,.decode_i(be_calculator.reservation_n.decode)
+     ,.decode_i(calculator.reservation_n.decode)
 
-     ,.commit_v_i(be_calculator.commit_pkt.instret)
-     ,.commit_pc_i(be_calculator.commit_pkt.pc)
-     ,.commit_instr_i(be_calculator.commit_pkt.instr)
+     ,.commit_v_i(calculator.commit_pkt.instret)
+     ,.commit_pc_i(calculator.commit_pkt.pc)
+     ,.commit_instr_i(calculator.commit_pkt.instr)
 
-     ,.rd_w_v_i(be_checker.scheduler.wb_pkt.rd_w_v)
-     ,.rd_addr_i(be_checker.scheduler.wb_pkt.rd_addr)
-     ,.rd_data_i(be_checker.scheduler.wb_pkt.rd_data)
+     ,.rd_w_v_i(scheduler.wb_pkt.rd_w_v)
+     ,.rd_addr_i(scheduler.wb_pkt.rd_addr)
+     ,.rd_data_i(scheduler.wb_pkt.rd_data)
 
-     ,.interrupt_v_i(be_mem.csr.trap_pkt_cast_o._interrupt)
-     ,.cause_i(be_mem.csr.trap_pkt_cast_o.cause)
+     ,.interrupt_v_i(calculator.pipe_sys.csr.trap_pkt_cast_o._interrupt)
+     ,.cause_i((calculator.pipe_sys.csr.priv_mode_n == `PRIV_MODE_S)
+               ? calculator.pipe_sys.csr.scause_li
+               : calculator.pipe_sys.csr.mcause_li
+               )
      // TODO: Find a way to access the finish_o signals for each core
      ,.finish_o()
      );
-
-  if (num_core_p == 1)
-    begin : cosim
-      bind bp_be_top
-        bp_nonsynth_cosim
-         #(.bp_params_p(bp_params_p))
-          cosim
-          (.clk_i(clk_i)
-           ,.reset_i(reset_i)
-           ,.freeze_i(scheduler.int_regfile.cfg_bus.freeze)
-           ,.en_i(testbench.cosim_p == 1)
-           ,.cosim_instr_i(testbench.cosim_instr_p)
-
-           ,.mhartid_i(scheduler.int_regfile.cfg_bus.core_id)
-           // Want to pass config file as a parameter, but cannot in Verilator 4.025
-           // Parameter-resolved constants must not use dotted references
-           ,.config_file_i(testbench.cosim_cfg_file_p)
-
-           ,.decode_i(calculator.reservation_n.decode)
-
-           ,.commit_v_i(calculator.commit_pkt.instret)
-           ,.commit_pc_i(calculator.commit_pkt.pc)
-           ,.commit_instr_i(calculator.commit_pkt.instr)
-
-           ,.rd_w_v_i(scheduler.wb_pkt.rd_w_v)
-           ,.rd_addr_i(scheduler.wb_pkt.rd_addr)
-           ,.rd_data_i(scheduler.wb_pkt.rd_data)
-
-           ,.interrupt_v_i(calculator.pipe_sys.trap_pkt._interrupt)
-           ,.cause_i((calculator.pipe_sys.csr.priv_mode_n == `PRIV_MODE_S)
-                     ? calculator.pipe_sys.csr.scause_li
-                     : calculator.pipe_sys.csr.mcause_li
-                     )
-
-           ,.finish_o(testbench.cosim_finish_lo)
-           );
-    end
-  else
-    begin : no_cosim
-      assign cosim_finish_lo = '0;
-    end
 
 bind bp_be_top
   bp_be_nonsynth_perf
@@ -290,7 +252,7 @@ bind bp_be_top
 
      ,.commit_v_i(calculator.commit_pkt.instret)
 
-     ,.program_finish_i(testbench.program_finish_lo | testbench.cosim_finish_lo)
+     ,.program_finish_i(testbench.program_finish_lo)
      );
 
   bind bp_be_top
@@ -367,10 +329,12 @@ bind bp_be_top
        ,.wt_req(wt_req)
        ,.store_data(data_tv_r)
 
+       ,.data_mem_v_i(data_mem_v_li)
        ,.data_mem_pkt_v_i(data_mem_pkt_v_i)
        ,.data_mem_pkt_i(data_mem_pkt_i)
        ,.data_mem_pkt_yumi_o(data_mem_pkt_yumi_o)
        
+       ,.tag_mem_v_i(tag_mem_v_li)
        ,.tag_mem_pkt_v_i(tag_mem_pkt_v_i)
        ,.tag_mem_pkt_i(tag_mem_pkt_i)
        ,.tag_mem_pkt_yumi_o(tag_mem_pkt_yumi_o)
@@ -378,6 +342,8 @@ bind bp_be_top
        ,.stat_mem_pkt_v_i(stat_mem_pkt_v_i)
        ,.stat_mem_pkt_i(stat_mem_pkt_i)
        ,.stat_mem_pkt_yumi_o(stat_mem_pkt_yumi_o)
+
+       ,.program_finish_i(testbench.program_finish_lo)
        );
 
   bind bp_fe_icache
@@ -448,11 +414,15 @@ bind bp_be_top
        ,.itlb_fill_v_i(fe.mem.itlb.v_i & fe.mem.itlb.w_i)
        ,.itlb_vtag_i(fe.mem.itlb.vtag_i)
        ,.itlb_entry_i(fe.mem.itlb.entry_i)
+       ,.itlb_cam_r_v_i(fe.mem.itlb.cam.r_v_i)
 
        ,.dtlb_clear_i(be.calculator.pipe_mem.dtlb.flush_i)
        ,.dtlb_fill_v_i(be.calculator.pipe_mem.dtlb.v_i & be.calculator.pipe_mem.dtlb.w_i)
        ,.dtlb_vtag_i(be.calculator.pipe_mem.dtlb.vtag_i)
        ,.dtlb_entry_i(be.calculator.pipe_mem.dtlb.entry_i)
+       ,.dtlb_cam_r_v_i(fe.mem.itlb.cam.r_v_i)
+
+       ,.program_finish_i(testbench.program_finish_lo)
        );
 
   bp_mem_nonsynth_tracer
@@ -530,7 +500,7 @@ bind bp_be_top
 
        ,.commit_pkt(be.calculator.commit_pkt)
 
-       ,.program_finish_i(testbench.program_finish_lo | testbench.cosim_finish_lo)
+       ,.program_finish_i(testbench.program_finish_lo)
        );
 
   bind bp_be_top
@@ -549,7 +519,7 @@ bind bp_be_top
 
        ,.commit_v_i(calculator.commit_pkt.instret)
 
-       ,.program_finish_i(testbench.program_finish_lo | testbench.cosim_finish_lo)
+       ,.program_finish_i(testbench.program_finish_lo)
        );
 
   // TODO: There should be a param about whether to instantiate the uncore, rather than a list of
