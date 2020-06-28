@@ -156,8 +156,8 @@ logic is_fencei_mem1, is_fencei_mem2;
 logic [vaddr_width_p-1:0] vaddr_mem1, vaddr_mem2;
 
 wire is_req    = decode.pipe_mem_v;
-wire is_store  = decode.pipe_mem_v & decode.fu_op inside {e_sb, e_sh, e_sw, e_sd, e_scw, e_scd};
-wire is_fencei = decode.pipe_mem_v & decode.fu_op inside {e_fencei};
+wire is_store  = decode.pipe_mem_v & decode.fu_op inside {e_dcache_opcode_sb, e_dcache_opcode_sh, e_dcache_opcode_sw, e_dcache_opcode_sd, e_dcache_opcode_scw, e_dcache_opcode_scd};
+wire is_fencei = decode.pipe_mem_v & decode.fu_op inside {e_dcache_opcode_fencei};
 
 // Calculate cache access vaddr
 wire [vaddr_width_p-1:0] offset = decode.offset_sel ? '0 : imm_i[0+:vaddr_width_p];
