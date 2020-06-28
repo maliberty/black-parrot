@@ -63,13 +63,11 @@ bsg_cam_1r1w_sync
    ,.r_v_i(v_i & ~w_i)
    ,.r_tag_i(vtag_i)
 
-   ,.r_data_o(r_entry)
+   ,.r_data_o(entry_o)
    ,.r_v_o(r_v_lo)
    );
 
-assign passthrough_entry = '{ptag: vtag_r, default: '0};
-assign entry_o    = translation_en_i ? r_entry : passthrough_entry;
-assign v_o        = translation_en_i ? r_v_r & r_v_lo : r_v_r;
+assign v_o        = r_v_r & r_v_lo;
 assign miss_v_o   = r_v_r & ~v_o;
 
 endmodule
